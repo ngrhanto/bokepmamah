@@ -5,15 +5,18 @@ import { getAllVideos, type VideoData } from '../../utils/data.ts';
 import { slugify } from '../../utils/slugify.ts';
 import { desk, nama, url } from '../../utils/site';
 export const prerender = true;
-// Definisikan jumlah tag per halaman. Ini harus konsisten di seluruh aplikasi Anda.
-const ITEMS_PER_PAGE_TAGS = 1000;
+
+// Hapus definisi ITEMS_PER_PAGE_TAGS di sini
+// const ITEMS_PER_PAGE_TAGS = 1000; // HAPUS BARIS INI ATAU KOMENTARI
 
 // getStaticPaths Astro untuk menghasilkan semua halaman paginasi pada waktu build.
 export async function getStaticPaths() {
+    // Definisi ITEMS_PER_PAGE_TAGS dipindahkan ke DALAM fungsi ini
+    const ITEMS_PER_PAGE_TAGS = 30; // Gunakan nilai yang konsisten, misalnya 30 per halaman
+
     const allVideos: VideoData[] = await getAllVideos();
 
     // --- LOGIKA FILTER DAN SORT TAG (DUPLIKASI dari index.astro) ---
-    // Logika ini harus tetap ada di sini sesuai permintaan "jangan merubah fungsi yang sudah ada".
     const uniqueTags = new Set<string>();
     allVideos.forEach(video => {
         if (typeof video.tags === 'string') {
@@ -29,20 +32,16 @@ export async function getStaticPaths() {
     const filteredTags = Array.from(uniqueTags).filter(tag => {
         const lowerCaseTag = tag.toLowerCase();
 
-        // Aturan 1: Filter tag yang mengandung "bokep" atau variannya
         const isBokepAndSpecificRandom = /^bokep\s+[\w\d\-]{1,2}$/i.test(lowerCaseTag);
         const isJustBokep = /^bokep$/i.test(lowerCaseTag);
         const isBokepFollowedByNumbers = /^bokep\s+\d+$/i.test(lowerCaseTag);
         const isBokepIrrelevant = isBokepAndSpecificRandom || isJustBokep || isBokepFollowedByNumbers;
 
-        // Aturan 2: Filter tag yang hanya satu kata dan sangat panjang
         const words = lowerCaseTag.split(/\s+/);
         const isSingleLongRandomWord = words.length === 1 && words[0].length > 20;
 
-        // Aturan 3: Filter tag yang hanya terdiri dari angka
         const isOnlyNumbers = /^\d+$/.test(lowerCaseTag);
         
-        // Aturan 4: Filter kata-kata tunggal yang umum tidak relevan atau terlalu pendek
         const singleWordShortStopList = new Set([
             'dan', 'atau', 'di', 'ini', 'itu', 'yang',
             'video', 'film', 'movie', 'full', 'gratis', 'online', 'terbaru', 'download',
@@ -66,20 +65,18 @@ export async function getStaticPaths() {
     let paths = [];
     // Buat path untuk setiap halaman
     for (let i = 1; i <= totalPages; i++) {
-        // Ambil hanya slice tag yang relevan untuk halaman saat ini.
-        // Ini penting untuk mencegah Error 500 karena passing data yang terlalu besar.
         const paginatedTagsForThisPage = sortedTags.slice(
             (i - 1) * ITEMS_PER_PAGE_TAGS,
             i * ITEMS_PER_PAGE_TAGS
         );
 
         paths.push({
-            params: { page: String(i) }, // Parameter rute dinamis (misal: /tags/2)
+            params: { page: String(i) },
             props: {
                 currentPage: i,
                 totalTags: totalTags,
                 totalPages: totalPages,
-                paginatedTags: paginatedTagsForThisPage, // Kirim hanya tag untuk halaman ini
+                paginatedTags: paginatedTagsForThisPage,
             }
         });
     }
@@ -93,7 +90,7 @@ const { currentPage, totalTags, totalPages, paginatedTags } = Astro.props;
 // Breadcrumbs untuk navigasi
 const breadcrumbs = [
     { name: 'Home', url: `${url}` },
-    { name: 'Semua Tags', url: `${url}/tags/1` }, // Link ke halaman pertama tags
+    { name: 'Semua Tags', url: `${url}/tags/1` },
     { name: `Halaman ${currentPage}` },
 ];
 
@@ -174,21 +171,13 @@ const pageKeywords = `tags video, daftar tags, ${nama} tags, topik video, genre 
         ) : (
             <div class="tags-grid">
                 {paginatedTags.map(tag => {
-                    // --- PEMERIKSAAN DEFENSIF SAAT RENDERING ---
-                    // Pastikan tag adalah string yang valid sebelum digunakan
                     if (typeof tag !== 'string' || tag.trim() === '') {
-                        // Jika tag tidak valid, bisa dilompati atau log peringatan
-                        // console.warn(`Skipping invalid tag on page ${currentPage}:`, tag);
-                        return null; // Tidak render tag ini
+                        return null;
                     }
                     const tagSlug = slugify(tag);
-                    // Pastikan slug yang dihasilkan valid
                     if (!tagSlug) {
-                        // console.error(`Invalid slug generated for tag "${tag}" on page ${currentPage}`);
-                        return null; // Tidak render jika slug tidak valid
+                        return null;
                     }
-                    // --- AKHIR PEMERIKSAAN DEFENSIF ---
-
                     return (
                         <a href={`${url}/video/${tagSlug}/1`} class="tag-card" rel="tag" title={`Lihat semua video dengan tag ${tag}`}>
                             {tag}
@@ -198,18 +187,15 @@ const pageKeywords = `tags video, daftar tags, ${nama} tags, topik video, genre 
             </div>
         )}
 
-        {/* --- KOMPONEN PAGINASI --- */}
         {totalPages > 1 && (
             <nav class="pagination" aria-label="Tag Pagination">
                 <ul class="pagination-list">
-                    {/* Tautan untuk halaman sebelumnya */}
                     {currentPage > 1 && (
                         <li class="pagination-item">
                             <a href={`${url}/tags/${currentPage - 1}`} class="pagination-link" aria-label="Previous Page">Sebelumnya</a>
                         </li>
                     )}
 
-                    {/* Tautan nomor halaman */}
                     {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
                         <li class="pagination-item">
                             <a
@@ -222,7 +208,6 @@ const pageKeywords = `tags video, daftar tags, ${nama} tags, topik video, genre 
                         </li>
                     ))}
 
-                    {/* Tautan untuk halaman selanjutnya */}
                     {currentPage < totalPages && (
                         <li class="pagination-item">
                             <a href={`${url}/tags/${currentPage + 1}`} class="pagination-link" aria-label="Next Page">Selanjutnya</a>
@@ -231,6 +216,5 @@ const pageKeywords = `tags video, daftar tags, ${nama} tags, topik video, genre 
                 </ul>
             </nav>
         )}
-        {/* --- AKHIR KOMPONEN PAGINASI --- */}
     </main>
 </Layout>
