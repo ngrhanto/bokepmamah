@@ -165,7 +165,7 @@ const pageKeywords = `tags video, daftar tags, ${nama} tags, topik video, genre 
                     {/* Tautan untuk halaman sebelumnya (jika bukan halaman pertama) */}
                     {currentPage > 1 && (
                         <li class="pagination-item">
-                            <a href={`${url}/tags/${currentPage - 1}`} class="pagination-link" aria-label="Previous Page">Sebelumnya</a>
+                            <a href={`${url}/tags/${currentPage - 1 === 1 ? '' : currentPage - 1`} class="pagination-link" aria-label="Previous Page">Sebelumnya</a>
                         </li>
                     )}
 
@@ -173,7 +173,7 @@ const pageKeywords = `tags video, daftar tags, ${nama} tags, topik video, genre 
                     {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
                         <li class="pagination-item">
                             <a
-                                href={`${url}/tags/${page}`}
+                                href={`${url}/tags/${page === 1 ? '' : page}`}
                                 class={`pagination-link ${page === currentPage ? 'active' : ''}`}
                                 aria-current={page === currentPage ? 'page' : undefined}
                             >
