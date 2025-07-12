@@ -60,7 +60,7 @@ const filteredTags = Array.from(uniqueTags).filter(tag => {
 const sortedTags = filteredTags.sort((a, b) => a.localeCompare(b));
 
 // --- LOGIKA PAGINASI BARU UNTUK FILE INI ---
-const ITEMS_PER_PAGE_TAGS = 1000; // Jumlah tag per halaman
+const ITEMS_PER_PAGE_TAGS = 30; // Jumlah tag per halaman
 const currentPage = 1; // Halaman saat ini (selalu 1 untuk index.astro)
 const totalTags = sortedTags.length;
 const totalPages = Math.ceil(totalTags / ITEMS_PER_PAGE_TAGS);
