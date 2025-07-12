@@ -4,7 +4,7 @@ import Layout from '../../layouts/BaseLayout.astro';
 import { getAllVideos, type VideoData } from '../../utils/data.ts';
 import { slugify } from '../../utils/slugify.ts';
 import { desk, nama, url } from '../../utils/site';
-
+export const prerender = true;
 // Definisikan jumlah tag per halaman. Ini harus konsisten di seluruh aplikasi Anda.
 const ITEMS_PER_PAGE_TAGS = 1000;
 
@@ -190,7 +190,7 @@ const pageKeywords = `tags video, daftar tags, ${nama} tags, topik video, genre 
                     // --- AKHIR PEMERIKSAAN DEFENSIF ---
 
                     return (
-                        <a href={`${url}/tag/${tagSlug}/1`} class="tag-card" rel="tag" title={`Lihat semua video dengan tag ${tag}`}>
+                        <a href={`${url}/video/${tagSlug}/1`} class="tag-card" rel="tag" title={`Lihat semua video dengan tag ${tag}`}>
                             {tag}
                         </a>
                     )
