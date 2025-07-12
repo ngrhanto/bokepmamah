@@ -35,11 +35,13 @@ export const GET: APIRoute = async ({ site }) => {
     const absoluteThumbnailUrl = thumbnailUrl && (thumbnailUrl.startsWith('http://') || thumbnailUrl.startsWith('https://')) ? thumbnailUrl : `${baseUrl}${thumbnailUrl}`;
     const absoluteEmbedUrl = embedUrl && (embedUrl.startsWith('http://') || embedUrl.startsWith('https://')) ? embedUrl : `${baseUrl}${embedUrl}`;
 
-    const duration = video.duration && typeof video.duration === 'number' ? Math.round(video.duration) : 126;
+    const duration = video.duration && typeof video.duration === 'number' ? Math.round(video.duration) : 26;
     const videoPublishedDate = video.datePublished || defaultPublishedDate;
     const videoModifiedDate = video.dateModified || videoPublishedDate;
 
-    if (video.title && video.description && absoluteThumbnailUrl && absoluteEmbedUrl) {
+    const videoDescriptionForSitemap = `Video bokep viral ${video.title} yang terbaru kategori ${video.category} nonton streaming di link ${terbit}`;
+
+    if (video.title && videoDescriptionForSitemap && absoluteThumbnailUrl && absoluteEmbedUrl) {
       let tagsHtml = '';
       if (video.tags) {
         let tagsToProcess: string[] = [];
@@ -64,7 +66,7 @@ export const GET: APIRoute = async ({ site }) => {
           <video:video>
             <video:thumbnail_loc>${absoluteThumbnailUrl}</video:thumbnail_loc>
             <video:title>${escapeXml(video.title)}</video:title>
-            <video:description>${escapeXml(video.description)}</video:description>
+            <video:description>${escapeXml(videoDescriptionForSitemap)}</video:description>
             <video:content_loc>${absoluteEmbedUrl}</video:content_loc>
             <video:duration>${duration}</video:duration>
             <video:publication_date>${videoPublishedDate}</video:publication_date>
@@ -74,7 +76,7 @@ export const GET: APIRoute = async ({ site }) => {
         </url>
       `);
     } else {
-      console.warn(`Melewatkan video untuk sitemap karena data wajib hilang: ID ${video.id || 'N/A'}`);
+      console.warn(`Melewatkan video untuk sitemap karena data wajib hilang: ID ${video.id || 'N/A'} (Deskripsi: ${videoDescriptionForSitemap})`);
     }
   });
 
@@ -91,17 +93,10 @@ export const GET: APIRoute = async ({ site }) => {
   });
 };
 
-/**
- * Meng-escape karakter khusus XML dan membersihkan entitas HTML/XML yang tidak lengkap.
- *
- * @param unsafe String yang perlu di-escape.
- * @returns String yang aman untuk XML.
- */
 function escapeXml(unsafe: string | null | undefined): string {
   if (!unsafe) return '';
 
   let cleaned = unsafe;
-
   cleaned = cleaned.replace(/&(?!#?\w+;)/g, '&amp;');
 
   return cleaned.replace(/[<>"']/g, function (c) {
