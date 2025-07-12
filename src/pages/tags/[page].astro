@@ -6,9 +6,10 @@ import { slugify } from '../../utils/slugify.ts';
 import { desk, nama, url } from '../../utils/site';
 export const prerender = true;
 
+// getStaticPaths Astro untuk menghasilkan semua halaman paginasi pada waktu build.
 export async function getStaticPaths() {
     // Definisi ITEMS_PER_PAGE_TAGS dipindahkan ke DALAM fungsi ini
-    const ITEMS_PER_PAGE_TAGS = 1000; // Gunakan nilai yang konsisten, misalnya 30 per halaman
+    const ITEMS_PER_PAGE_TAGS = 30; // Gunakan nilai yang konsisten
 
     const allVideos: VideoData[] = await getAllVideos();
 
@@ -27,17 +28,13 @@ export async function getStaticPaths() {
 
     const filteredTags = Array.from(uniqueTags).filter(tag => {
         const lowerCaseTag = tag.toLowerCase();
-
         const isBokepAndSpecificRandom = /^bokep\s+[\w\d\-]{1,2}$/i.test(lowerCaseTag);
         const isJustBokep = /^bokep$/i.test(lowerCaseTag);
         const isBokepFollowedByNumbers = /^bokep\s+\d+$/i.test(lowerCaseTag);
         const isBokepIrrelevant = isBokepAndSpecificRandom || isJustBokep || isBokepFollowedByNumbers;
-
         const words = lowerCaseTag.split(/\s+/);
         const isSingleLongRandomWord = words.length === 1 && words[0].length > 20;
-
         const isOnlyNumbers = /^\d+$/.test(lowerCaseTag);
-        
         const singleWordShortStopList = new Set([
             'dan', 'atau', 'di', 'ini', 'itu', 'yang',
             'video', 'film', 'movie', 'full', 'gratis', 'online', 'terbaru', 'download',
@@ -49,7 +46,7 @@ export async function getStaticPaths() {
             isBokepIrrelevant ||
             isSingleLongRandomWord ||
             isOnlyNumbers ||
-            isSingleWordAndInShortStopList
+            isSingleWordAndInStopList
         );
     });
     const sortedTags = filteredTags.sort((a, b) => a.localeCompare(b));
@@ -59,8 +56,8 @@ export async function getStaticPaths() {
     const totalPages = Math.ceil(totalTags / ITEMS_PER_PAGE_TAGS);
 
     let paths = [];
-    // Buat path untuk setiap halaman
-    for (let i = 1; i <= totalPages; i++) {
+    // Buat path untuk setiap halaman, DIMULAI DARI HALAMAN 2
+    for (let i = 2; i <= totalPages; i++) { // <-- PERUBAHAN DI SINI: mulai dari 2
         const paginatedTagsForThisPage = sortedTags.slice(
             (i - 1) * ITEMS_PER_PAGE_TAGS,
             i * ITEMS_PER_PAGE_TAGS
@@ -86,7 +83,7 @@ const { currentPage, totalTags, totalPages, paginatedTags } = Astro.props;
 // Breadcrumbs untuk navigasi
 const breadcrumbs = [
     { name: 'Home', url: `${url}` },
-    { name: 'Semua Tags', url: `${url}/tags/1` },
+    { name: 'Semua Tags', url: `${url}/tags` }, // <-- PERUBAHAN DI SINI: /tags bukan /tags/1
     { name: `Halaman ${currentPage}` },
 ];
 
@@ -186,16 +183,18 @@ const pageKeywords = `tags video, daftar tags, ${nama} tags, topik video, genre 
         {totalPages > 1 && (
             <nav class="pagination" aria-label="Tag Pagination">
                 <ul class="pagination-list">
+                    {/* Tautan untuk halaman sebelumnya */}
                     {currentPage > 1 && (
                         <li class="pagination-item">
-                            <a href={`${url}/tags/${currentPage - 1}`} class="pagination-link" aria-label="Previous Page">Sebelumnya</a>
+                            <a href={`${url}/tags/${currentPage - 1 === 1 ? '' : currentPage - 1}`} class="pagination-link" aria-label="Previous Page">Sebelumnya</a> {/* <-- PERUBAHAN DI SINI: Jika halaman 1, link ke /tags/ */}
                         </li>
                     )}
 
+                    {/* Tautan nomor halaman */}
                     {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
                         <li class="pagination-item">
                             <a
-                                href={`${url}/tags/${page}`}
+                                href={`${url}/tags/${page === 1 ? '' : page}`} // <-- PERUBAHAN DI SINI: Jika halaman 1, link ke /tags/
                                 class={`pagination-link ${page === currentPage ? 'active' : ''}`}
                                 aria-current={page === currentPage ? 'page' : undefined}
                             >
