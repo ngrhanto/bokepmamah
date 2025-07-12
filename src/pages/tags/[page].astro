@@ -5,13 +5,15 @@ import { getAllVideos, type VideoData } from '../../utils/data.ts';
 import { slugify } from '../../utils/slugify.ts';
 import { desk, nama, url } from '../../utils/site';
 
-const ITEMS_PER_PAGE_TAGS = 1000; // Jumlah tag per halaman (HARUS SAMA DENGAN index.astro)
+// Definisikan jumlah tag per halaman. Ini harus konsisten di seluruh aplikasi Anda.
+const ITEMS_PER_PAGE_TAGS = 30;
 
-// Fungsi getStaticPaths untuk menghasilkan semua halaman paginasi
+// getStaticPaths Astro untuk menghasilkan semua halaman paginasi pada waktu build.
 export async function getStaticPaths() {
     const allVideos: VideoData[] = await getAllVideos();
 
-    // --- DUPLIKASI LOGIKA FILTER & SORT TAG DARI index.astro (Tetap seperti ini sesuai permintaan) ---
+    // --- LOGIKA FILTER DAN SORT TAG (DUPLIKASI dari index.astro) ---
+    // Logika ini harus tetap ada di sini sesuai permintaan "jangan merubah fungsi yang sudah ada".
     const uniqueTags = new Set<string>();
     allVideos.forEach(video => {
         if (typeof video.tags === 'string') {
@@ -26,13 +28,21 @@ export async function getStaticPaths() {
 
     const filteredTags = Array.from(uniqueTags).filter(tag => {
         const lowerCaseTag = tag.toLowerCase();
+
+        // Aturan 1: Filter tag yang mengandung "bokep" atau variannya
         const isBokepAndSpecificRandom = /^bokep\s+[\w\d\-]{1,2}$/i.test(lowerCaseTag);
         const isJustBokep = /^bokep$/i.test(lowerCaseTag);
         const isBokepFollowedByNumbers = /^bokep\s+\d+$/i.test(lowerCaseTag);
         const isBokepIrrelevant = isBokepAndSpecificRandom || isJustBokep || isBokepFollowedByNumbers;
+
+        // Aturan 2: Filter tag yang hanya satu kata dan sangat panjang
         const words = lowerCaseTag.split(/\s+/);
         const isSingleLongRandomWord = words.length === 1 && words[0].length > 20;
+
+        // Aturan 3: Filter tag yang hanya terdiri dari angka
         const isOnlyNumbers = /^\d+$/.test(lowerCaseTag);
+        
+        // Aturan 4: Filter kata-kata tunggal yang umum tidak relevan atau terlalu pendek
         const singleWordShortStopList = new Set([
             'dan', 'atau', 'di', 'ini', 'itu', 'yang',
             'video', 'film', 'movie', 'full', 'gratis', 'online', 'terbaru', 'download',
@@ -48,26 +58,28 @@ export async function getStaticPaths() {
         );
     });
     const sortedTags = filteredTags.sort((a, b) => a.localeCompare(b));
-    // --- AKHIR DUPLIKASI LOGIKA ---
+    // --- AKHIR LOGIKA FILTER DAN SORT TAG ---
 
     const totalTags = sortedTags.length;
     const totalPages = Math.ceil(totalTags / ITEMS_PER_PAGE_TAGS);
 
     let paths = [];
+    // Buat path untuk setiap halaman
     for (let i = 1; i <= totalPages; i++) {
-        // --- PERUBAHAN DI SINI: Hanya slice tag yang relevan untuk halaman ini ---
+        // Ambil hanya slice tag yang relevan untuk halaman saat ini.
+        // Ini penting untuk mencegah Error 500 karena passing data yang terlalu besar.
         const paginatedTagsForThisPage = sortedTags.slice(
             (i - 1) * ITEMS_PER_PAGE_TAGS,
             i * ITEMS_PER_PAGE_TAGS
         );
 
         paths.push({
-            params: { page: String(i) }, // Parameter rute untuk halaman
+            params: { page: String(i) }, // Parameter rute dinamis (misal: /tags/2)
             props: {
                 currentPage: i,
                 totalTags: totalTags,
                 totalPages: totalPages,
-                paginatedTags: paginatedTagsForThisPage, // LEBIH BAIK: Kirim hanya tag untuk halaman ini
+                paginatedTags: paginatedTagsForThisPage, // Kirim hanya tag untuk halaman ini
             }
         });
     }
@@ -75,22 +87,17 @@ export async function getStaticPaths() {
     return paths;
 }
 
-// Ambil props yang diteruskan dari getStaticPaths
-// --- PERUBAHAN DI SINI: Ganti 'sortedTags' menjadi 'paginatedTags' ---
+// Destrukturisasi props yang diterima dari getStaticPaths
 const { currentPage, totalTags, totalPages, paginatedTags } = Astro.props;
 
-// Tidak perlu lagi memotong tag di sini karena 'paginatedTags' sudah berisi slice yang benar
-// const paginatedTags = sortedTags.slice(
-//     (currentPage - 1) * ITEMS_PER_PAGE_TAGS,
-//     currentPage * ITEMS_PER_PAGE_TAGS
-// );
-
+// Breadcrumbs untuk navigasi
 const breadcrumbs = [
     { name: 'Home', url: `${url}` },
     { name: 'Semua Tags', url: `${url}/tags/1` }, // Link ke halaman pertama tags
     { name: `Halaman ${currentPage}` },
 ];
 
+// Schema.org untuk BreadcrumbList (SEO)
 const schemaBreadcrumb = {
     "@context": "https://schema.org",
     "@type": "BreadcrumbList",
@@ -102,6 +109,7 @@ const schemaBreadcrumb = {
     }))
 };
 
+// Schema.org untuk WebPage (SEO)
 const schemaWebPage = {
     "@context": "https://schema.org",
     "@type": "WebPage",
@@ -123,6 +131,7 @@ const schemaWebPage = {
     }
 };
 
+// Keywords untuk meta tag SEO
 const pageKeywords = `tags video, daftar tags, ${nama} tags, topik video, genre video, halaman ${currentPage}, ${paginatedTags.slice(0, 5).join(', ')}${paginatedTags.length > 5 ? ', dll.' : ''}`;
 
 ---
@@ -164,14 +173,32 @@ const pageKeywords = `tags video, daftar tags, ${nama} tags, topik video, genre 
             </p>
         ) : (
             <div class="tags-grid">
-                {paginatedTags.map(tag => (
-                    <a href={`${url}/video/${slugify(tag)}/1`} class="tag-card" rel="tag" title={`Lihat semua video dengan tag ${tag}`}>
-                        {tag}
-                    </a>
-                ))}
+                {paginatedTags.map(tag => {
+                    // --- PEMERIKSAAN DEFENSIF SAAT RENDERING ---
+                    // Pastikan tag adalah string yang valid sebelum digunakan
+                    if (typeof tag !== 'string' || tag.trim() === '') {
+                        // Jika tag tidak valid, bisa dilompati atau log peringatan
+                        // console.warn(`Skipping invalid tag on page ${currentPage}:`, tag);
+                        return null; // Tidak render tag ini
+                    }
+                    const tagSlug = slugify(tag);
+                    // Pastikan slug yang dihasilkan valid
+                    if (!tagSlug) {
+                        // console.error(`Invalid slug generated for tag "${tag}" on page ${currentPage}`);
+                        return null; // Tidak render jika slug tidak valid
+                    }
+                    // --- AKHIR PEMERIKSAAN DEFENSIF ---
+
+                    return (
+                        <a href={`${url}/tag/${tagSlug}/1`} class="tag-card" rel="tag" title={`Lihat semua video dengan tag ${tag}`}>
+                            {tag}
+                        </a>
+                    )
+                })}
             </div>
         )}
 
+        {/* --- KOMPONEN PAGINASI --- */}
         {totalPages > 1 && (
             <nav class="pagination" aria-label="Tag Pagination">
                 <ul class="pagination-list">
@@ -204,5 +231,6 @@ const pageKeywords = `tags video, daftar tags, ${nama} tags, topik video, genre 
                 </ul>
             </nav>
         )}
+        {/* --- AKHIR KOMPONEN PAGINASI --- */}
     </main>
 </Layout>
