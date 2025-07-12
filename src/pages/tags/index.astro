@@ -91,7 +91,7 @@ const schemaBreadcrumb = {
 const schemaWebPage = {
     "@context": "https://schema.org",
     "@type": "WebPage",
-    "url": `${url}/tags`,
+    "url": `${url}/tags/`,
     "name": `Semua Tags - ${nama}`,
     "description": `Jelajahi daftar lengkap tags dan kategori video yang tersedia di ${nama}. Temukan konten favorit Anda berdasarkan topik.`,
     "publisher": {
@@ -105,7 +105,7 @@ const schemaWebPage = {
     "inLanguage": "id-ID",
     "mainEntityOfPage": {
         "@type": "WebPage",
-        "@id": `${url}/tags`
+        "@id": `${url}/tags/`
     }
 };
 
@@ -165,7 +165,7 @@ const pageKeywords = `tags video, daftar tags, ${nama} tags, topik video, genre 
                     {/* Tautan untuk halaman sebelumnya (jika bukan halaman pertama) */}
                     {currentPage > 1 && (
                         <li class="pagination-item">
-                            <a href={`${url}/tags/${currentPage - 1 === 1 ? '' : currentPage - 1`} class="pagination-link" aria-label="Previous Page">Sebelumnya</a>
+                            <a href={`${url}/tags/${currentPage - 1 === 1 ? '' : currentPage - 1}`} class="pagination-link" aria-label="Previous Page">Sebelumnya</a> {/* <-- PERUBAHAN DI SINI: Jika halaman 1, link ke /tags/ */}
                         </li>
                     )}
 
