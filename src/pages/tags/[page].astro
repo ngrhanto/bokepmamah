@@ -6,13 +6,9 @@ import { slugify } from '../../utils/slugify.ts';
 import { desk, nama, url } from '../../utils/site';
 export const prerender = true;
 
-// Hapus definisi ITEMS_PER_PAGE_TAGS di sini
-// const ITEMS_PER_PAGE_TAGS = 1000; // HAPUS BARIS INI ATAU KOMENTARI
-
-// getStaticPaths Astro untuk menghasilkan semua halaman paginasi pada waktu build.
 export async function getStaticPaths() {
     // Definisi ITEMS_PER_PAGE_TAGS dipindahkan ke DALAM fungsi ini
-    const ITEMS_PER_PAGE_TAGS = 30; // Gunakan nilai yang konsisten, misalnya 30 per halaman
+    const ITEMS_PER_PAGE_TAGS = 1000; // Gunakan nilai yang konsisten, misalnya 30 per halaman
 
     const allVideos: VideoData[] = await getAllVideos();
 
