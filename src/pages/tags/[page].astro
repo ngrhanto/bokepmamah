@@ -11,7 +11,7 @@ const ITEMS_PER_PAGE_TAGS = 1000; // Jumlah tag per halaman (HARUS SAMA DENGAN i
 export async function getStaticPaths() {
     const allVideos: VideoData[] = await getAllVideos();
 
-    // --- DUPLIKASI LOGIKA FILTER & SORT TAG DARI index.astro ---
+    // --- DUPLIKASI LOGIKA FILTER & SORT TAG DARI index.astro (Tetap seperti ini sesuai permintaan) ---
     const uniqueTags = new Set<string>();
     allVideos.forEach(video => {
         if (typeof video.tags === 'string') {
@@ -55,13 +55,19 @@ export async function getStaticPaths() {
 
     let paths = [];
     for (let i = 1; i <= totalPages; i++) {
+        // --- PERUBAHAN DI SINI: Hanya slice tag yang relevan untuk halaman ini ---
+        const paginatedTagsForThisPage = sortedTags.slice(
+            (i - 1) * ITEMS_PER_PAGE_TAGS,
+            i * ITEMS_PER_PAGE_TAGS
+        );
+
         paths.push({
             params: { page: String(i) }, // Parameter rute untuk halaman
             props: {
                 currentPage: i,
                 totalTags: totalTags,
                 totalPages: totalPages,
-                sortedTags: sortedTags, // Kirim semua tag yang diurutkan ke komponen untuk dipotong
+                paginatedTags: paginatedTagsForThisPage, // LEBIH BAIK: Kirim hanya tag untuk halaman ini
             }
         });
     }
@@ -70,13 +76,14 @@ export async function getStaticPaths() {
 }
 
 // Ambil props yang diteruskan dari getStaticPaths
-const { currentPage, totalTags, totalPages, sortedTags } = Astro.props;
+// --- PERUBAHAN DI SINI: Ganti 'sortedTags' menjadi 'paginatedTags' ---
+const { currentPage, totalTags, totalPages, paginatedTags } = Astro.props;
 
-// Potong tag untuk halaman saat ini
-const paginatedTags = sortedTags.slice(
-    (currentPage - 1) * ITEMS_PER_PAGE_TAGS,
-    currentPage * ITEMS_PER_PAGE_TAGS
-);
+// Tidak perlu lagi memotong tag di sini karena 'paginatedTags' sudah berisi slice yang benar
+// const paginatedTags = sortedTags.slice(
+//     (currentPage - 1) * ITEMS_PER_PAGE_TAGS,
+//     currentPage * ITEMS_PER_PAGE_TAGS
+// );
 
 const breadcrumbs = [
     { name: 'Home', url: `${url}` },
@@ -158,14 +165,13 @@ const pageKeywords = `tags video, daftar tags, ${nama} tags, topik video, genre 
         ) : (
             <div class="tags-grid">
                 {paginatedTags.map(tag => (
-                    <a href={`${url}/tag/${slugify(tag)}/1`} class="tag-card" rel="tag" title={`Lihat semua video dengan tag ${tag}`}>
+                    <a href={`${url}/video/${slugify(tag)}/1`} class="tag-card" rel="tag" title={`Lihat semua video dengan tag ${tag}`}>
                         {tag}
                     </a>
                 ))}
             </div>
         )}
 
-        {/* --- KOMPONEN PAGINASI BARU --- */}
         {totalPages > 1 && (
             <nav class="pagination" aria-label="Tag Pagination">
                 <ul class="pagination-list">
@@ -198,6 +204,5 @@ const pageKeywords = `tags video, daftar tags, ${nama} tags, topik video, genre 
                 </ul>
             </nav>
         )}
-        {/* --- AKHIR KOMPONEN PAGINASI BARU --- */}
     </main>
 </Layout>
